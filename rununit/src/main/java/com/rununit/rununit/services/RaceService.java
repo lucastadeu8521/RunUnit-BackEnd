@@ -4,6 +4,7 @@ import com.rununit.rununit.entities.Race;
 import com.rununit.rununit.repositories.RaceRepository;
 import com.rununit.rununit.services.exceptions.DatabaseException;
 import com.rununit.rununit.services.exceptions.ResourceNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -43,7 +44,20 @@ public class RaceService {
         }
     }
 
-    public void UpdateData(Race entity, Race obj){
+    public Race update(UUID id, Race obj) {
+
+        try {
+            Race entity = repository.getReferenceById(id);
+
+            updateData(entity, obj);
+
+            return repository.save(entity);
+        }catch(EntityNotFoundException e) {
+            throw new ResourceNotFoundException(id);
+        }
+    }
+
+    public void updateData(Race entity, Race obj){
         entity.setName(obj.getName());
         entity.setDescription(obj.getDescription());
         entity.setLocation(obj.getLocation());
