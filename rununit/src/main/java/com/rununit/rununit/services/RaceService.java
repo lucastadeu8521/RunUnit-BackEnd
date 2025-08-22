@@ -19,7 +19,7 @@ public class RaceService {
     @Autowired
     private RaceRepository repository;
 
-    public List<Race> FindAll(){
+    public List<Race> findAll(){
         return repository.findAll();
     }
 
