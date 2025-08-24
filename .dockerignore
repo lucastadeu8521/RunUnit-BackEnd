@@ -1,4 +1,4 @@
-.gradle
+rununit/.gradle
 .idea
 build/
 target/
