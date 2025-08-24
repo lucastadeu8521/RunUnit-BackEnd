@@ -10,6 +10,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,26 +21,25 @@ public class RaceService {
     @Autowired
     private RaceRepository repository;
 
-    public List<Race> findAll(){
+    public List<Race> findAll() {
         return repository.findAll();
     }
 
-    public Race findById(UUID id){
+    public Race findById(UUID id) {
         Optional<Race> obj = repository.findById(id);
         return obj.orElseThrow(() -> new ResourceNotFoundException(id));
     }
 
-    public Race insert(Race obj){
+    public Race insert(Race obj) {
         return repository.save(obj);
     }
 
-    public void deleteById(UUID id){
-        try{
+    public void deleteById(UUID id) {
+        try {
             repository.deleteById(id);
-        } catch (EmptyResultDataAccessException e){
+        } catch (EmptyResultDataAccessException e) {
             throw new ResourceNotFoundException(id);
-        }
-        catch (DataIntegrityViolationException e){
+        } catch (DataIntegrityViolationException e) {
             throw new DatabaseException(e.getMessage());
         }
     }
@@ -52,16 +52,20 @@ public class RaceService {
             updateData(entity, obj);
 
             return repository.save(entity);
-        }catch(EntityNotFoundException e) {
+        } catch (EntityNotFoundException e) {
             throw new ResourceNotFoundException(id);
         }
     }
 
-    public void updateData(Race entity, Race obj){
+    public void updateData(Race entity, Race obj) {
         entity.setName(obj.getName());
         entity.setDescription(obj.getDescription());
         entity.setLocation(obj.getLocation());
         entity.setEndTime(obj.getEndTime());
         entity.setStartTime(obj.getStartTime());
+    }
+
+    public List<Race> searchRacesByFilters(String name, String location, ZonedDateTime startDate, ZonedDateTime endDate) {
+        return repository.findByFilters(name, location, startDate, endDate);
     }
 }

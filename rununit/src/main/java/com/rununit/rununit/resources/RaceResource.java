@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -50,4 +51,16 @@ public class RaceResource {
         obj = service.update(id, obj);
         return ResponseEntity.ok().body(obj);
     }
+
+    @GetMapping(value = "/search")
+    public ResponseEntity<List<Race>> search(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) ZonedDateTime startDate,
+            @RequestParam(required = false) ZonedDateTime endDate) {
+
+        List<Race> list = service.searchRacesByFilters(name, location, startDate, endDate);
+        return ResponseEntity.ok().body(list);
+    }
+
 }
