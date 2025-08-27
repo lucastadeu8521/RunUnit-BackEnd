@@ -1,16 +1,15 @@
 package com.rununit.rununit.controllers;
 
-
 import com.rununit.rununit.entities.User;
 import com.rununit.rununit.repositories.UserRepository;
+import com.rununit.rununit.security.JwtTokenUtil;
 
-import com.rununit.rununit.services.exceptions.AuthenticationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-
 
 @RestController
 @RequestMapping("/api/auth")
@@ -34,7 +33,10 @@ public class AuthController {
             authManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
-            User user = userRepository.findByEmail(request.getEmail()).get();
+
+            User user = userRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
             return jwtTokenUtil.generateToken(user);
         } catch (AuthenticationException e) {
             throw new RuntimeException("Credenciais inválidas");
