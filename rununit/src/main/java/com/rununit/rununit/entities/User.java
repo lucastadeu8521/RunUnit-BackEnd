@@ -28,6 +28,9 @@ public class User {
     @Column(name = "has_biometrics", nullable = false)
     private Boolean hasBiometrics = false;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private UserBiometrics biometrics;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "user_role", nullable = false, length = 10)
     private UserRole userRole;
@@ -54,9 +57,9 @@ public class User {
     private Integer totalRunningTime = 0;
 
     @Column( nullable = false)
-    private boolean active = true;
+    private Boolean active = true;
 
-    @Column(name = "profile_picture_url", length = 100)
+    @Column(name = "profile_picture_url", length = 500)
     private String profilePictureUrl;
 
     @Column(length = 50)
@@ -75,7 +78,7 @@ public class User {
     private String password;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, length = 2)
     private Gender gender;
 
     @ManyToOne(fetch = FetchType.LAZY)
