@@ -1,5 +1,8 @@
 package com.rununit.rununit.entities.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum Status {
 
     PENDING(1),
@@ -7,14 +10,10 @@ public enum Status {
     COMPLETED(3),
     CANCELED(4),;
 
-    int code;
+    private int code;
 
      Status (int code){
         this.code = code;
-    }
-
-    public int getCode() {
-        return code;
     }
 
     public static Status valueOf(int code) {
