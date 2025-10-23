@@ -24,4 +24,8 @@ public interface RaceRepository extends JpaRepository<Race, UUID> {
             @Param("startDate") ZonedDateTime startDate,
             @Param("endDate") ZonedDateTime endDate
     );
+
+
+    List<Race> findByNameContainingIgnoreCase(String name);
+    List<Race> findByCategoryContainingIgnoreCase(String category);
 }

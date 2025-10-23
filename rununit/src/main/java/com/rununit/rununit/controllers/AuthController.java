@@ -33,7 +33,7 @@ public class AuthController {
     private final String GOOGLE_CLIENT_SECRET = "SEU_CLIENT_SECRET";
     private final String GOOGLE_REDIRECT_URI = "http://localhost:8080/api/auth/google/callback";
 
-    // ------------------ LOGIN NORMAL ------------------
+
     @PostMapping("/login")
     public String login(@RequestBody AuthRequest request) {
         try {
@@ -50,14 +50,14 @@ public class AuthController {
         }
     }
 
-    // ------------------ REGISTRO ------------------
+
     @PostMapping("/register")
     public User register(@RequestBody User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
     }
 
-    // ------------------ GOOGLE LOGIN ------------------
+
     @GetMapping("/google")
     public String redirectToGoogle() {
         String googleAuthUrl = "https://accounts.google.com/o/oauth2/v2/auth" +

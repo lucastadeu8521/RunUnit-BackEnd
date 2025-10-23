@@ -13,10 +13,10 @@ import java.util.Collections;
 @Component
 public class GoogleTokenVerifier {
 
-    private final GoogleIdTokenVerifier verifier;
+    private final com.rununit.rununit.security.GoogleIdTokenVerifier verifier;
 
     public GoogleTokenVerifier() {
-        this.verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
+        this.verifier = new Builder(new NetHttpTransport(), new JacksonFactory())
              //lembrar de colocar depois a api aq
                 .setAudience(Collections.singletonList("api."))
                 .build();
@@ -32,5 +32,10 @@ public class GoogleTokenVerifier {
             e.printStackTrace();
         }
         return null;
+    }
+
+    private class Builder {
+        public Builder(Object netHttpTransport, JacksonFactory jacksonFactory) {
+        }
     }
 }
