@@ -1,112 +1,87 @@
 package com.rununit.rununit.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import org.hibernate.annotations.UuidGenerator;
+import com.rununit.rununit.entities.enums.Status;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.util.Objects;
-import java.util.UUID;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "tb_race")
+@Table(name = "races")
+@Getter
+@Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString
 public class Race implements Serializable {
 
+    @EqualsAndHashCode.Include
+    @Setter(AccessLevel.NONE)
     @Id
-    @UuidGenerator
-    private UUID id;
-    private String name;
-    private String description;
-    private Instant createdAt;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    private Double distance;
-    private ZonedDateTime startTime;
-    private ZonedDateTime endTime;
-    private String location;
+    @Column(length = 255, nullable = false)
+    private String name;
+
+    @Column(name = "race_date", nullable = false  )
+    private LocalDateTime raceDate;
+
+    @Column(name = "venue_name", length = 150)
+    private String venueName;
+
+    @Column(name = "registration_url", length = 500)
+    private String registrationUrl;
+
+    @Column(name = "organizer_contact", length = 255)
+    private String organizerContact;
+
+    @Column(nullable = false, length = 100)
+    private String city;
+
+    @Column(nullable = false, length = 100)
+    private String state;
+
+    @Column(nullable = false, precision = 9, scale = 6)
+    private BigDecimal latitude;
+
+    @Column(nullable = false, precision = 9, scale = 6)
+    private BigDecimal longitude;
+
+    @Column(name = "max_participants")
+    private Integer maxParticipants;
+
+    @Column(name = "race_distance_km", precision = 5, scale = 2)
+    private BigDecimal raceDistanceKm;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Status status;
+
+    @CreationTimestamp
+    @Column(nullable = false)
+    private Instant createdAt;
 
     public Race() {
     }
 
-    public Race(UUID id, String name, String description, Instant createdAt, Double distance, ZonedDateTime startTime, ZonedDateTime endTime, String location) {
-        this.id = id;
+    public Race(Long id, String name, LocalDateTime raceDate, String venueName, String registrationUrl, String organizerContact, String city, String state, BigDecimal latitude, BigDecimal longitude, Integer maxParticipants, BigDecimal raceDistanceKm, Status status, Instant createdAt) {
         this.name = name;
-        this.description = description;
+        this.raceDate = raceDate;
+        this.venueName = venueName;
+        this.registrationUrl = registrationUrl;
+        this.organizerContact = organizerContact;
+        this.city = city;
+        this.state = state;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.maxParticipants = maxParticipants;
+        this.raceDistanceKm = raceDistanceKm;
+        this.status = status;
         this.createdAt = createdAt;
-        this.distance = distance;
-        this.startTime = startTime;
-        this.endTime = endTime;
-        this.location = location;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public Double getDistance() {
-        return distance;
-    }
-
-    public void setDistance(Double distance) {
-        this.distance = distance;
-    }
-
-    public ZonedDateTime getStartTime() {
-        return startTime;
-    }
-
-    public void setStartTime(ZonedDateTime startTime) {
-        this.startTime = startTime;
-    }
-
-    public ZonedDateTime getEndTime() {
-        return endTime;
-    }
-
-    public void setEndTime(ZonedDateTime endTime) {
-        this.endTime = endTime;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        Race race = (Race) o;
-        return Objects.equals(id, race.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(id);
     }
 }
 
