@@ -17,6 +17,7 @@ import java.time.Instant;
 @Table(name = "logins")
 public class Login {
 
+    @EqualsAndHashCode.Include
     @Id
     @Column(name = "user_id")
     private Long userId;
