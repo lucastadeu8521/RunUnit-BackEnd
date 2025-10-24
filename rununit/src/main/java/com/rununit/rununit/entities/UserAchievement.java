@@ -27,7 +27,12 @@ public class UserAchievement {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("achievementId")
-    @JoinColumn(name = "achievement_id", nullable = false, foreignKey = @ForeignKey(name = "FK_USERACHIEVEMENT_ACHIEVEMENT_ID", onDelete = ConstraintMode.RESTRICT))
+    @JoinColumn(
+            name = "achievement_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "FK_USERACHIEVEMENT_ACHIEVEMENT_ID", value = ConstraintMode.CONSTRAINT)
+
+    )
     private Achievement achievement;
 
 
