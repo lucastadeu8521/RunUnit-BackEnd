@@ -6,26 +6,26 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
+
 
 @Repository
-public interface RaceRepository extends JpaRepository<Race, UUID> {
+public interface RaceRepository extends JpaRepository<Race, Long> {
 
     @Query("SELECT r FROM Race r " +
             "WHERE (:name IS NULL OR lower(r.name) LIKE lower(concat('%', :name, '%'))) " +
-            "AND (:location IS NULL OR lower(r.location) LIKE lower(concat('%', :location, '%'))) " +
-            "AND (:startDate IS NULL OR r.startTime >= :startDate) " +
-            "AND (:endDate IS NULL OR r.startTime <= :endDate)")
+            "AND (:location IS NULL OR lower(r.city) LIKE lower(concat('%', :location, '%')) OR lower(r.state) LIKE lower(concat('%', :location, '%'))) " +
+            "AND (:startDate IS NULL OR r.raceDate >= :startDate) " +
+            "AND (:endDate IS NULL OR r.raceDate <= :endDate)")
     List<Race> findByFilters(
             @Param("name") String name,
             @Param("location") String location,
-            @Param("startDate") ZonedDateTime startDate,
-            @Param("endDate") ZonedDateTime endDate
+            @Param("startDate") Instant startDate,
+            @Param("endDate") Instant endDate
     );
 
-
     List<Race> findByNameContainingIgnoreCase(String name);
-    List<Race> findByCategoryContainingIgnoreCase(String category);
+
+    List<Race> findByCityContainingIgnoreCase(String city);
 }
