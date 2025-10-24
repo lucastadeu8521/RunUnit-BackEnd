@@ -2,70 +2,124 @@ package com.rununit.rununit.domain.services;
 
 import com.rununit.rununit.domain.entities.Race;
 import com.rununit.rununit.infrastructure.repositories.RaceRepository;
-import com.rununit.rununit.domain.services.exceptions.DatabaseException;
-import com.rununit.rununit.domain.services.exceptions.ResourceNotFoundException;
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.EmptyResultDataAccessException;
+import com.rununit.rununit.web.dto.race.RaceCreationRequestDto;
+import com.rununit.rununit.web.dto.race.RaceResponseDto;
+import com.rununit.rununit.web.dto.race.RaceUpdateRequestDto;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class RaceService {
 
-    @Autowired
-    private RaceRepository repository;
+    private final RaceRepository raceRepository;
 
-    public List<Race> findAll() {
-        return repository.findAll();
+    public RaceService(RaceRepository raceRepository) {
+        this.raceRepository = raceRepository;
     }
 
-    public Race findById(UUID id) {
-        Optional<Race> obj = repository.findById(id);
-        return obj.orElseThrow(() -> new ResourceNotFoundException(id));
+    private RaceResponseDto toResponseDto(Race race) {
+        return new RaceResponseDto(
+                race.getId(),
+                race.getName(),
+                race.getRaceDate(),
+                race.getVenueName(),
+                race.getRegistrationUrl(),
+                race.getOrganizerContact(),
+                race.getCity(),
+                race.getState(),
+                race.getLatitude(),
+                race.getLongitude(),
+                race.getMaxParticipants(),
+                race.getRaceDistanceKm(),
+                race.getStatus(),
+                race.getCreatedAt()
+        );
     }
 
-    public Race insert(Race obj) {
-        return repository.save(obj);
+    private Race toEntity(RaceCreationRequestDto requestDto) {
+        Race race = new Race();
+        race.setName(requestDto.name());
+        race.setRaceDate(requestDto.raceDate());
+        race.setVenueName(requestDto.venueName());
+        race.setRegistrationUrl(requestDto.registrationUrl());
+        race.setOrganizerContact(requestDto.organizerContact());
+        race.setCity(requestDto.city());
+        race.setState(requestDto.state());
+        race.setLatitude(requestDto.latitude());
+        race.setLongitude(requestDto.longitude());
+        race.setMaxParticipants(requestDto.maxParticipants());
+        race.setRaceDistanceKm(requestDto.raceDistanceKm());
+        race.setStatus(requestDto.status());
+        return race;
     }
 
-    public void deleteById(UUID id) {
-        try {
-            repository.deleteById(id);
-        } catch (EmptyResultDataAccessException e) {
-            throw new ResourceNotFoundException(id);
-        } catch (DataIntegrityViolationException e) {
-            throw new DatabaseException(e.getMessage());
+    @Transactional
+    public RaceResponseDto createRace(RaceCreationRequestDto requestDto) {
+        Race newRace = toEntity(requestDto);
+        Race savedRace = raceRepository.save(newRace);
+        return toResponseDto(savedRace);
+    }
+
+    public List<RaceResponseDto> findAllRaces() {
+        return raceRepository.findAll().stream()
+                .map(this::toResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    public RaceResponseDto findRaceById(Long id) {
+        return raceRepository.findById(id)
+                .map(this::toResponseDto)
+                .orElseThrow(() -> new RuntimeException("Race not found with ID: " + id));
+    }
+
+    @Transactional
+    public RaceResponseDto updateRace(Long id, RaceUpdateRequestDto requestDto) {
+        Race race = raceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Race not found with ID: " + id));
+
+        if (requestDto.name() != null) race.setName(requestDto.name());
+        if (requestDto.raceDate() != null) race.setRaceDate(requestDto.raceDate());
+        if (requestDto.venueName() != null) race.setVenueName(requestDto.venueName());
+        if (requestDto.registrationUrl() != null) race.setRegistrationUrl(requestDto.registrationUrl());
+        if (requestDto.organizerContact() != null) race.setOrganizerContact(requestDto.organizerContact());
+        if (requestDto.city() != null) race.setCity(requestDto.city());
+        if (requestDto.state() != null) race.setState(requestDto.state());
+        if (requestDto.latitude() != null) race.setLatitude(requestDto.latitude());
+        if (requestDto.longitude() != null) race.setLongitude(requestDto.longitude());
+        if (requestDto.maxParticipants() != null) race.setMaxParticipants(requestDto.maxParticipants());
+        if (requestDto.raceDistanceKm() != null) race.setRaceDistanceKm(requestDto.raceDistanceKm());
+        if (requestDto.status() != null) race.setStatus(requestDto.status());
+
+        Race updatedRace = raceRepository.save(race);
+        return toResponseDto(updatedRace);
+    }
+
+    @Transactional
+    public void deleteRace(Long id) {
+        if (!raceRepository.existsById(id)) {
+            throw new RuntimeException("Race not found with ID: " + id);
         }
+        raceRepository.deleteById(id);
     }
 
-    public Race update(UUID id, Race obj) {
-
-        try {
-            Race entity = repository.getReferenceById(id);
-
-            updateData(entity, obj);
-
-            return repository.save(entity);
-        } catch (EntityNotFoundException e) {
-            throw new ResourceNotFoundException(id);
-        }
+    public List<RaceResponseDto> searchRacesByFilters(
+            String name,
+            String location,
+            Instant startDate,
+            Instant endDate
+    ) {
+        return raceRepository.findByFilters(name, location, startDate, endDate).stream()
+                .map(this::toResponseDto)
+                .collect(Collectors.toList());
     }
 
-
-    public void updateData(Race entity, Race obj) {
-        entity.setName(obj.getName());
-        entity.setVenueName(obj.getVenueName());
-
-
-        entity.setRaceDate(obj.getRaceDate());
-    }
-    public List<Race> searchRacesByFilters(String name, String location, ZonedDateTime startDate, ZonedDateTime endDate) {
-        return repository.findByFilters(name, location, startDate, endDate);
+    public List<RaceResponseDto> searchRacesByName(String name) {
+        return raceRepository.findByNameContainingIgnoreCase(name).stream()
+                .map(this::toResponseDto)
+                .collect(Collectors.toList());
     }
 }
