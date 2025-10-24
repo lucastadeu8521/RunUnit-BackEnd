@@ -1,6 +1,6 @@
 package com.rununit.rununit.config;
 
-import com.rununit.rununit.security.JwtAuthenticationFilter;
+import com.rununit.rununit.infrastructure.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;

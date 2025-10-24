@@ -1,7 +1,7 @@
 package com.rununit.rununit.config;
 
-import com.rununit.rununit.entities.Race;
-import com.rununit.rununit.repositories.RaceRepository;
+import com.rununit.rununit.domain.entities.Race;
+import com.rununit.rununit.infrastructure.repositories.RaceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
