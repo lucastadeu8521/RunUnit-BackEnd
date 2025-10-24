@@ -57,14 +57,14 @@ public class RaceService {
         }
     }
 
+
     public void updateData(Race entity, Race obj) {
         entity.setName(obj.getName());
-        entity.setDescription(obj.getDescription());
-        entity.setLocation(obj.getLocation());
-        entity.setEndTime(obj.getEndTime());
-        entity.setStartTime(obj.getStartTime());
-    }
+        entity.setVenueName(obj.getVenueName());
 
+
+        entity.setRaceDate(obj.getRaceDate());
+    }
     public List<Race> searchRacesByFilters(String name, String location, ZonedDateTime startDate, ZonedDateTime endDate) {
         return repository.findByFilters(name, location, startDate, endDate);
     }
