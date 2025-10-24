@@ -1,41 +1,49 @@
 package com.rununit.rununit.web.controllers;
 
-
-import com.rununit.rununit.domain.entities.User;
 import com.rununit.rununit.domain.services.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.rununit.rununit.web.dto.user.UserCreationRequestDto;
+import com.rununit.rununit.web.dto.user.UserResponseDto;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @PostMapping
-    public User createUser(@RequestBody User user) {
-        return userService.createUser(user);
+    public ResponseEntity<UserResponseDto> createUser(@RequestBody UserCreationRequestDto requestDto) {
+        UserResponseDto responseDto = userService.createUser(requestDto);
+
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(responseDto.id())
+                .toUri();
+
+        return ResponseEntity.created(location).body(responseDto);
     }
 
     @GetMapping
-    public List<User> getAllUsers() {
+    public List<UserResponseDto> getAllUsers() {
         return userService.getAllUsers();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        return userService.getUserById(id)
+    public ResponseEntity<UserResponseDto> getUserById(@PathVariable Long id) {
+        return userService.getUserResponseById(id) // Novo método que retorna DTO
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PutMapping("/{id}")
-    public User updateUser(@PathVariable Long id, @RequestBody User user) {
-        return userService.updateUser(id, user);
     }
 
     @DeleteMapping("/{id}")

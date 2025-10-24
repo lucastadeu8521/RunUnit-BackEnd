@@ -89,12 +89,13 @@ public class User {
     @JoinColumn(name = "membership_type_id", nullable = false)
     private MembershipType membershipType;
 
-    public User(String name, String lastName, String email, String password, LocalDate birthDate, Gender gender, String timezone, String locale) {
+    public User(String name, String lastName, LocalDate birthDate, Gender gender, String timezone, String locale, MembershipType membershipType) {
         this.name = name;
         this.lastName = lastName;
         this.birthDate = birthDate;
         this.gender = gender;
         this.timezone = timezone;
         this.locale = locale;
+        this.membershipType = membershipType;
     }
 }
