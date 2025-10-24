@@ -11,10 +11,7 @@ import java.util.Optional;
 @Repository
 public interface UserAchievementRepository extends JpaRepository<UserAchievement, UserAchievementId> {
 
-
     List<UserAchievement> findByIdUserId(Long userId);
 
-
     Optional<UserAchievement> findByIdUserIdAndIdAchievementId(Long userId, Long achievementId);
-
 }
