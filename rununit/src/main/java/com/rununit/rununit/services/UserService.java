@@ -1,6 +1,4 @@
 package com.rununit.rununit.services;
-
-
 import com.rununit.rununit.entities.User;
 import com.rununit.rununit.repositories.UserRepository;
 import org.springframework.stereotype.Service;
