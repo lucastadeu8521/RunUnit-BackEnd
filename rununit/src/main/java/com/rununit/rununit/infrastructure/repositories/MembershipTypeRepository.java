@@ -9,7 +9,7 @@ import java.util.Optional;
 @Repository
 public interface MembershipTypeRepository extends JpaRepository<MembershipType, Long> {
 
+    Optional<MembershipType> findByNameIgnoreCase(String name);
 
-    Optional<MembershipType> findByName(String name);
+    boolean existsByNameIgnoreCase(String name);
 }
-
