@@ -1,5 +1,6 @@
 package com.rununit.rununit.entities;
 
+import com.rununit.rununit.entities.enums.PostStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

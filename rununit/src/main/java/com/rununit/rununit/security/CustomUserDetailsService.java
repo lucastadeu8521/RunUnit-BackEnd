@@ -1,7 +1,5 @@
 package com.rununit.rununit.security;
 
-
-
 import com.rununit.rununit.entities.User;
 import com.rununit.rununit.repositories.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -9,7 +7,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+import java.util.Collections;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -20,15 +18,17 @@ public class CustomUserDetailsService implements UserDetailsService {
         this.userRepository = userRepository;
     }
 
+
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado com email: " + email));
+
 
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
-                user.getPassword(), // usar getPassword() do User.java
-                new ArrayList<>()
+                user.getPassword(),
+                Collections.emptyList()
         );
     }
 }
