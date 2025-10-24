@@ -6,10 +6,11 @@ import com.rununit.rununit.domain.entities.MembershipType;
 import com.rununit.rununit.domain.enums.UserRole;
 import com.rununit.rununit.infrastructure.repositories.UserRepository;
 import com.rununit.rununit.infrastructure.repositories.LoginRepository;
-import com.rununit.rununit.infrastructure.repositories.MembershipTypeRepository; // Necessário para buscar o tipo de membro
+import com.rununit.rununit.infrastructure.repositories.MembershipTypeRepository;
 import com.rununit.rununit.web.dto.user.UserCreationRequestDto;
 import com.rununit.rununit.web.dto.user.UserResponseDto;
 import org.springframework.stereotype.Service;
+// import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,11 +22,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final LoginRepository loginRepository;
     private final MembershipTypeRepository membershipTypeRepository;
+    // private final PasswordEncoder passwordEncoder;
 
     public UserService(UserRepository userRepository, LoginRepository loginRepository, MembershipTypeRepository membershipTypeRepository /*, PasswordEncoder passwordEncoder */) {
         this.userRepository = userRepository;
         this.loginRepository = loginRepository;
         this.membershipTypeRepository = membershipTypeRepository;
+        // this.passwordEncoder = passwordEncoder;
     }
 
     private UserResponseDto toResponseDto(User user) {
@@ -35,12 +38,14 @@ public class UserService {
                 user.getLastName(),
                 user.getLogin().getEmail(),
                 user.getUserRole(),
-                user.getTotalRunningDistance(),
-                user.getTotalRunningTime(),
-                user.getActive(),
                 user.getProfilePictureUrl(),
                 user.getBirthDate(),
                 user.getGender(),
+                user.getTimezone(),
+                user.getLocale(),
+                user.getTotalRunningDistance(),
+                user.getTotalRunningTime(),
+                user.getActive(),
                 user.getCreatedAt()
         );
     }
@@ -50,6 +55,7 @@ public class UserService {
         if (loginRepository.existsByEmail(requestDto.email())) {
             throw new RuntimeException("Email already registered");
         }
+
 
         MembershipType defaultMembership = membershipTypeRepository.findById(1L)
                 .orElseThrow(() -> new RuntimeException("Default Membership Type not found"));
@@ -75,8 +81,8 @@ public class UserService {
         newLogin.setPasswordHash(requestDto.password());
 
         loginRepository.save(newLogin);
-        savedUser.setLogin(newLogin);
 
+        savedUser.setLogin(newLogin);
         userRepository.save(savedUser);
 
         return toResponseDto(savedUser);

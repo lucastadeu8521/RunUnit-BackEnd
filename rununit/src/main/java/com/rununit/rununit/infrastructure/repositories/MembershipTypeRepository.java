@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface MembershipTypeRepository extends JpaRepository<MembershipType, Short> {
+public interface MembershipTypeRepository extends JpaRepository<MembershipType, Long> {
 
 
     Optional<MembershipType> findByName(String name);
