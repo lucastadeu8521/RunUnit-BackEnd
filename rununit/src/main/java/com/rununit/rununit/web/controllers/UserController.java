@@ -3,7 +3,9 @@ package com.rununit.rununit.web.controllers;
 import com.rununit.rununit.domain.services.UserService;
 import com.rununit.rununit.web.dto.user.UserCreationRequestDto;
 import com.rununit.rununit.web.dto.user.UserResponseDto;
-import org.springframework.http.HttpStatus;
+import com.rununit.rununit.web.dto.user.UserUpdateRequestDto;
+import com.rununit.rununit.web.dto.user.PasswordUpdateRequestDto;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -21,8 +23,12 @@ public class UserController {
         this.userService = userService;
     }
 
+    private Long getAuthenticatedUserId() {
+        return 1L;
+    }
+
     @PostMapping
-    public ResponseEntity<UserResponseDto> createUser(@RequestBody UserCreationRequestDto requestDto) {
+    public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserCreationRequestDto requestDto) {
         UserResponseDto responseDto = userService.createUser(requestDto);
 
         URI location = ServletUriComponentsBuilder
@@ -41,9 +47,28 @@ public class UserController {
 
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDto> getUserById(@PathVariable Long id) {
-        return userService.getUserResponseById(id) // Novo método que retorna DTO
+        return userService.getUserResponseById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<UserResponseDto> updateProfile(
+            @Valid @RequestBody UserUpdateRequestDto requestDto) {
+
+        Long userId = getAuthenticatedUserId();
+
+        UserResponseDto responseDto = userService.updateProfile(userId, requestDto);
+        return ResponseEntity.ok(responseDto);
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<Void> updatePassword(
+            @Valid @RequestBody PasswordUpdateRequestDto requestDto) {
+
+        Long userId = getAuthenticatedUserId();
+        userService.updatePassword(userId, requestDto);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
