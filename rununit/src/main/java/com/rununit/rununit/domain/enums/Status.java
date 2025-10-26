@@ -10,7 +10,7 @@ public enum Status {
     COMPLETED(3),
     CANCELED(4),;
 
-    private int code;
+    private final int code;
 
      Status (int code){
         this.code = code;
