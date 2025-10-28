@@ -4,6 +4,7 @@ import com.rununit.rununit.domain.enums.Gender;
 import com.rununit.rununit.domain.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.Builder.Default;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -29,6 +30,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Login login;
 
@@ -38,8 +40,22 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RunningSession> runningSessions;
 
+    @Default
     @Column(name = "has_biometrics", nullable = false)
     private Boolean hasBiometrics = false;
+
+    @Default
+    @Column(name= "total_running_distance", precision = 10, scale = 2)
+    private BigDecimal totalRunningDistance = BigDecimal.ZERO;
+
+    @Default
+    @Column(name = "total_running_time")
+    private Long totalRunningTime = 0L;
+
+    @Default
+    @Column( nullable = false)
+    private Boolean active = true;
+
 
     @Enumerated(EnumType.STRING)
     @Column(name = "user_role", nullable = false, length = 10)
@@ -60,15 +76,6 @@ public class User {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
-    @Column(name= "total_running_distance", precision = 10, scale = 2)
-    private BigDecimal totalRunningDistance = BigDecimal.ZERO;
-
-    @Column(name = "total_running_time")
-    private Long totalRunningTime = 0L;
-
-    @Column( nullable = false)
-    private Boolean active = true;
-
     @Column(name = "profile_picture_url", length = 500)
     private String profilePictureUrl;
 
@@ -84,20 +91,10 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private Gender gender;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "membership_type_id", nullable = false)
     private MembershipType membershipType;
 
-    public User(String name, String lastName, LocalDate birthDate, Gender gender, String timezone, String locale, MembershipType membershipType) {
-        this.name = name;
-        this.lastName = lastName;
-        this.birthDate = birthDate;
-        this.gender = gender;
-        this.timezone = timezone;
-        this.locale = locale;
-        this.membershipType = membershipType;
-    }
 
     public String getPassword() {
         return (this.login != null) ? this.login.getPasswordHash() : null;

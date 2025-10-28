@@ -1,16 +1,16 @@
 package com.rununit.rununit.web.controllers;
 
 import com.rununit.rununit.domain.entities.User;
+import com.rununit.rununit.domain.services.AuthService;
 import com.rununit.rununit.infrastructure.repositories.UserRepository;
 import com.rununit.rununit.infrastructure.security.JwtTokenUtil;
-import com.rununit.rununit.domain.services.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -31,16 +31,20 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
+    // A CLASSE RECORD QUE ESTAVA CAUSANDO O ERRO
+    private record AuthRequest(String email, String password) {}
 
 
     @PostMapping("/login")
     public String login(@RequestBody AuthRequest request) {
         try {
             authManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+                    // CORREÇÃO 1: request.email() e request.password()
+                    new UsernamePasswordAuthenticationToken(request.email(), request.password())
             );
 
-            User user = userRepository.findByEmail(request.getEmail())
+            // CORREÇÃO 2: request.email()
+            User user = userRepository.findByLoginEmail(request.email())
                     .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
             return jwtTokenUtil.generateToken(user);
