@@ -98,4 +98,16 @@ public class User {
         this.locale = locale;
         this.membershipType = membershipType;
     }
+
+    public String getPassword() {
+        return (this.login != null) ? this.login.getPasswordHash() : null;
+    }
+
+    public void setPassword(String password) {
+        if (this.login == null) {
+            this.login = new Login();
+            this.login.setUser(this);
+        }
+        this.login.setPasswordHash(password);
+    }
 }
