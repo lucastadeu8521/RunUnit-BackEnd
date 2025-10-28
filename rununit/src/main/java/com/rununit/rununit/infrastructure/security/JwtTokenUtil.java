@@ -28,7 +28,7 @@ public class JwtTokenUtil {
         long expirationTimeMs = EXPIRATION_HOURS * 60 * 60 * 1000;
 
         return Jwts.builder()
-                .setSubject(user.getEmail())
+                .setSubject(user.getLogin().getEmail())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTimeMs))
                 .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
