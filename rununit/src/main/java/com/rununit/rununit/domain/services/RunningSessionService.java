@@ -99,7 +99,7 @@ public class RunningSessionService {
                 0,
                 savedSession.getDistanceMeters(),
                 0L,
-                savedSession.getElapsedSeconds().longValue() // Tempo novo
+                savedSession.getElapsedSeconds().longValue()
         );
 
         return toResponseDto(savedSession);
@@ -174,5 +174,11 @@ public class RunningSessionService {
                 0L
         );
         runningSessionRepository.delete(session);
+    }
+
+    public boolean isSessionOwner(Long sessionId, Long userId) {
+        return runningSessionRepository.findById(sessionId)
+                .map(session -> session.getUser() != null && session.getUser().getId().equals(userId))
+                .orElse(false);
     }
 }
