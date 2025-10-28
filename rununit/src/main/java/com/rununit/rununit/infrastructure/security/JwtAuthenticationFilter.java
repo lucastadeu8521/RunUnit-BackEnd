@@ -29,37 +29,47 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.userDetailsService = userDetailsService;
     }
 
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
+
+
         if (SecurityContextHolder.getContext().getAuthentication() != null) {
             filterChain.doFilter(request, response);
             return;
         }
 
         String token = getTokenFromRequest(request);
-        if (token != null && jwtTokenUtil.validateToken(token)) {
-            try {
-                String username = jwtTokenUtil.getUsernameFromToken(token);
 
-                if (username != null) {
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities()
-                            );
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                    logger.debug("Usuário autenticado: {} definido no SecurityContext", username);
+        if (token != null) {
+            try {
+                if (jwtTokenUtil.validateToken(token)) {
+                    String username = jwtTokenUtil.getUsernameFromToken(token);
+
+                    if (username != null) {
+                        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(
+                                        userDetails,
+                                        null,
+                                        userDetails.getAuthorities()
+                                );
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        logger.debug("Usuário autenticado: {} definido no SecurityContext", username);
+                    }
+                } else {
+                    logger.debug("Token JWT encontrado, mas é inválido. Rejeitado para autenticação.");
                 }
             } catch (Exception e) {
-                logger.error("Erro ao autenticar usuário com JWT: {}", e.getMessage(), e);
-            }
-        }
+                logger.warn("Erro ao processar o token JWT. Passando a requisição adiante. Erro: {}", e.getMessage());
 
+            }
+        } else {
+            logger.debug("Nenhum token JWT encontrado. Acesso será determinado pelo AuthorizationFilter.");
+        }
 
         filterChain.doFilter(request, response);
     }

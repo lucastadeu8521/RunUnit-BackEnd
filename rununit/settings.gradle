@@ -3,4 +3,4 @@ plugins {
 }
 rootProject.name = 'rununit'
 
-include 'untitled'
+// Linha 'include 'untitled'' comentada. Manter assim pq se nao nao roda

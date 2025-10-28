@@ -1,3 +1,4 @@
+/*
 package com.rununit.rununit.config;
 
 import com.rununit.rununit.domain.entities.Race;
@@ -33,3 +34,4 @@ public class TestConfig implements CommandLineRunner {
         raceRepository.save(r1);
     }
 }
+*/
