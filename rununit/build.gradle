@@ -1,7 +1,7 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.5.4'
-	id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'
+    id 'org.springframework.boot' version '3.5.4'
+    id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'com.rununit'
@@ -9,36 +9,42 @@ version = '0.0.1-SNAPSHOT'
 description = 'O RUNIT será uma plataforma integrada (web e mobile) para incentivar universitários a praticarem corrida, oferecendo desafios, acompanhamento de desempenho, recompensas virtuais e integração social por meio de eventos e ranking de participantes.'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'com.google.api-client:google-api-client:2.7.0'
-    implementation 'com.google.auth:google-auth-library-oauth2-http:1.24.0'
-    implementation 'com.google.http-client:google-http-client-jackson2:1.44.1'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    runtimeOnly 'com.h2database:h2'
     implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // 🔐 JWT (versão 0.12.5 — a mais nova e compatível)
     implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
-    compileOnly("org.projectlombok:lombok:1.18.42")
-    annotationProcessor("org.projectlombok:lombok:1.18.42")
-    testCompileOnly("org.projectlombok:lombok:1.18.42")
-    testAnnotationProcessor("org.projectlombok:lombok:1.18.42")
 
+    implementation 'com.google.api-client:google-api-client:2.7.0'
+    implementation 'com.google.auth:google-auth-library-oauth2-http:1.24.0'
+    implementation 'com.google.http-client:google-http-client-jackson2:1.44.1'
+
+    runtimeOnly 'com.h2database:h2'
+
+    compileOnly 'org.projectlombok:lombok:1.18.42'
+    annotationProcessor 'org.projectlombok:lombok:1.18.42'
+    testCompileOnly 'org.projectlombok:lombok:1.18.42'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.42'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }

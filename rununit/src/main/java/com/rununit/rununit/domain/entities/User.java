@@ -4,13 +4,13 @@ import com.rununit.rununit.domain.enums.Gender;
 import com.rununit.rununit.domain.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
-import lombok.Builder.Default;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -30,7 +30,6 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Login login;
 
@@ -38,33 +37,28 @@ public class User {
     private UserBiometrics biometrics;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<RunningSession> runningSessions;
+    private List<RunningSession> runningSessions = new ArrayList<>();
 
-    @Default
     @Column(name = "has_biometrics", nullable = false)
     private Boolean hasBiometrics = false;
 
-    @Default
-    @Column(name= "total_running_distance", precision = 10, scale = 2)
+    @Column(name = "total_running_distance", precision = 10, scale = 2)
     private BigDecimal totalRunningDistance = BigDecimal.ZERO;
 
-    @Default
     @Column(name = "total_running_time")
     private Long totalRunningTime = 0L;
 
-    @Default
-    @Column( nullable = false)
+    @Column(nullable = false)
     private Boolean active = true;
-
 
     @Enumerated(EnumType.STRING)
     @Column(name = "user_role", nullable = false, length = 10)
-    private UserRole userRole;
+    private UserRole userRole = UserRole.USER;
 
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(name= "last_name", nullable = false, length = 150)
+    @Column(name = "last_name", nullable = false, length = 150)
     private String lastName;
 
     @Setter(AccessLevel.NONE)
@@ -91,10 +85,18 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private Gender gender;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "membership_type_id", nullable = false)
     private MembershipType membershipType;
 
+
+    public void setLogin(Login login) {
+        this.login = login;
+        if (login != null) {
+            login.setUser(this);
+        }
+    }
 
     public String getPassword() {
         return (this.login != null) ? this.login.getPasswordHash() : null;
@@ -106,5 +108,9 @@ public class User {
             this.login.setUser(this);
         }
         this.login.setPasswordHash(password);
+    }
+
+    public boolean isActive() {
+        return this.active != null && this.active;
     }
 }

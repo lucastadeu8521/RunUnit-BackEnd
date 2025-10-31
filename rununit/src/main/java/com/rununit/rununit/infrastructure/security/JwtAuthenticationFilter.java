@@ -4,31 +4,46 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Set;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
-
     private final JwtTokenUtil jwtTokenUtil;
     private final UserDetailsService userDetailsService;
+    private static final Set<String> PUBLIC_PATHS = Set.of(
+            "/", "/favicon.ico", "/api/auth", "/v3/api-docs",
+            "/swagger-ui", "/swagger-ui.html", "/h2-console"
+    );
 
     public JwtAuthenticationFilter(JwtTokenUtil jwtTokenUtil, UserDetailsService userDetailsService) {
         this.jwtTokenUtil = jwtTokenUtil;
         this.userDetailsService = userDetailsService;
     }
 
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+
+
+        if (HttpMethod.OPTIONS.matches(request.getMethod())) {
+            return true;
+        }
+
+        return PUBLIC_PATHS.stream().anyMatch(publicPath ->
+                path.equals(publicPath) || path.startsWith(publicPath + "/")
+        );
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -36,39 +51,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-
-        if (SecurityContextHolder.getContext().getAuthentication() != null) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
         String token = getTokenFromRequest(request);
 
-        if (token != null) {
+        if (token != null && jwtTokenUtil.validateToken(token)) {
             try {
-                if (jwtTokenUtil.validateToken(token)) {
-                    String username = jwtTokenUtil.getUsernameFromToken(token);
+                String username = jwtTokenUtil.getUsernameFromToken(token);
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                    if (username != null) {
-                        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                        UsernamePasswordAuthenticationToken authentication =
-                                new UsernamePasswordAuthenticationToken(
-                                        userDetails,
-                                        null,
-                                        userDetails.getAuthorities()
-                                );
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-                        logger.debug("Usuário autenticado: {} definido no SecurityContext", username);
-                    }
-                } else {
-                    logger.debug("Token JWT encontrado, mas é inválido. Rejeitado para autenticação.");
-                }
+                UsernamePasswordAuthenticationToken authenticationToken =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities()
+                        );
+
+                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
             } catch (Exception e) {
-                logger.warn("Erro ao processar o token JWT. Passando a requisição adiante. Erro: {}", e.getMessage());
-
+                SecurityContextHolder.clearContext();
             }
-        } else {
-            logger.debug("Nenhum token JWT encontrado. Acesso será determinado pelo AuthorizationFilter.");
         }
 
         filterChain.doFilter(request, response);
