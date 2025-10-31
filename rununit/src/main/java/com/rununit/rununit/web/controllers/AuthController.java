@@ -3,6 +3,7 @@ package com.rununit.rununit.web.controllers;
 import com.rununit.rununit.domain.entities.Login;
 import com.rununit.rununit.domain.entities.MembershipType;
 import com.rununit.rununit.domain.entities.User;
+import com.rununit.rununit.domain.enums.UserRole;
 import com.rununit.rununit.domain.services.AuthService;
 import com.rununit.rununit.infrastructure.repositories.MembershipTypeRepository;
 import com.rununit.rununit.infrastructure.repositories.UserRepository;
@@ -40,12 +41,10 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
-
     private record AuthRequest(String email, String password) {}
 
-
     @PostMapping("/login")
-    public String login(@RequestBody AuthRequest request) {
+    public ResponseEntity<LoginResponse> login(@RequestBody AuthRequest request) {
         try {
             authManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.email(), request.password())
@@ -54,12 +53,21 @@ public class AuthController {
             User user = userRepository.findByLoginEmail(request.email())
                     .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-            return jwtTokenUtil.generateToken(user);
+            String token = jwtTokenUtil.generateToken(user);
+
+            return ResponseEntity.ok(new LoginResponse(
+                    token,
+                    user.getId(),
+                    user.getName(),
+                    user.getLastName(),
+                    user.getLogin().getEmail(),
+                    user.getUserRole()
+            ));
+
         } catch (AuthenticationException e) {
             throw new RuntimeException("Credenciais inválidas");
         }
     }
-
     @PostMapping("/register")
     public UserResponseDto register(@RequestBody @Valid UserCreationRequestDto request) {
         MembershipType defaultMembership = membershipTypeRepository.findById(1L)
@@ -81,7 +89,6 @@ public class AuthController {
         user.setLogin(login);
         User savedUser = userRepository.save(user);
 
-
         return new UserResponseDto(
                 savedUser.getId(),
                 savedUser.getName(),
@@ -99,8 +106,6 @@ public class AuthController {
                 savedUser.getCreatedAt()
         );
     }
-
-
     @GetMapping("/google")
     public ResponseEntity<String> redirectToGoogle() {
         String googleAuthUrl = authService.getGoogleAuthUrl();
@@ -108,7 +113,26 @@ public class AuthController {
     }
 
     @GetMapping("/google/callback")
-    public String googleCallback(@RequestParam("code") String code) {
-        return authService.authenticateWithGoogle(code);
+    public ResponseEntity<LoginResponse> googleCallback(@RequestParam("code") String code) {
+        String token = authService.authenticateWithGoogle(code);
+        User user = jwtTokenUtil.extractUserFromToken(token);
+
+        return ResponseEntity.ok(new LoginResponse(
+                token,
+                user.getId(),
+                user.getName(),
+                user.getLastName(),
+                user.getLogin().getEmail(),
+                user.getUserRole()
+        ));
     }
+
+    public record LoginResponse(
+            String token,
+            Long id,
+            String name,
+            String lastName,
+            String email,
+            UserRole role
+    ) {}
 }
