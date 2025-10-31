@@ -1,6 +1,7 @@
 package com.rununit.rununit.infrastructure.security;
 
 import com.rununit.rununit.domain.entities.User;
+import com.rununit.rununit.infrastructure.repositories.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -10,6 +11,7 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -29,11 +31,12 @@ public class JwtTokenUtil {
     @Value("${jwt.expiration.hours}")
     private long EXPIRATION_HOURS;
 
+    @Autowired
+    private UserRepository userRepository;
+
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
     }
-
-
     public String generateToken(User user) {
         long expirationTimeMs = EXPIRATION_HOURS * 60 * 60 * 1000;
 
@@ -45,16 +48,10 @@ public class JwtTokenUtil {
                 .compact();
     }
 
-
-    public String getUsernameFromToken(String token) {
-        return getClaimFromToken(token, Claims::getSubject);
-    }
-
-
     public boolean validateToken(String token) {
         try {
             Jwts.parser()
-                    .verifyWith(getSigningKey()) // usa o novo método da versão 0.12.x
+                    .verifyWith(getSigningKey())
                     .build()
                     .parseSignedClaims(token);
             return true;
@@ -71,7 +68,9 @@ public class JwtTokenUtil {
         }
         return false;
     }
-
+    public String getUsernameFromToken(String token) {
+        return getClaimFromToken(token, Claims::getSubject);
+    }
 
     public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = getAllClaimsFromToken(token);
@@ -84,5 +83,10 @@ public class JwtTokenUtil {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+    public User extractUserFromToken(String token) {
+        String email = getUsernameFromToken(token);
+        return userRepository.findByLoginEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado a partir do token"));
     }
 }
