@@ -1,19 +1,21 @@
 package com.rununit.rununit.domain.services;
 
 import com.rununit.rununit.domain.entities.Login;
+import com.rununit.rununit.domain.entities.MembershipType;
 import com.rununit.rununit.domain.entities.User;
 import com.rununit.rununit.domain.enums.Gender;
 import com.rununit.rununit.domain.enums.UserRole;
 import com.rununit.rununit.infrastructure.repositories.LoginRepository;
+import com.rununit.rununit.infrastructure.repositories.MembershipTypeRepository;
 import com.rununit.rununit.infrastructure.repositories.UserRepository;
 import com.rununit.rununit.infrastructure.security.JwtTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value; // Importação essencial para @Value
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.client.HttpClientErrorException; // Adicionado para melhor tratamento de erros
 
 import java.time.LocalDate;
 import java.util.Map;
@@ -21,7 +23,6 @@ import java.util.Optional;
 
 @Service
 public class AuthService {
-
 
     @Value("${google.client.id}")
     private String GOOGLE_CLIENT_ID;
@@ -32,7 +33,6 @@ public class AuthService {
     @Value("${google.redirect.uri}")
     private String GOOGLE_REDIRECT_URI;
 
-
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
 
@@ -40,10 +40,13 @@ public class AuthService {
     private UserRepository userRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private LoginRepository loginRepository;
 
     @Autowired
-    private LoginRepository loginRepository;
+    private MembershipTypeRepository membershipTypeRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -79,20 +82,19 @@ public class AuthService {
         String name = (String) userInfo.get("name");
 
         Optional<Login> existingLogin = loginRepository.findByEmail(email);
-
         Login login;
 
         if (existingLogin.isPresent()) {
             login = existingLogin.get();
         } else {
-
-
             String firstName = name;
             String lastName = "";
             if (name.contains(" ")) {
                 firstName = name.substring(0, name.lastIndexOf(" "));
                 lastName = name.substring(name.lastIndexOf(" ") + 1);
             }
+            MembershipType defaultMembership = membershipTypeRepository.findById(1L)
+                    .orElseThrow(() -> new RuntimeException("MembershipType padrão não encontrado"));
 
             User newUser = User.builder()
                     .name(firstName)
@@ -102,7 +104,7 @@ public class AuthService {
                     .gender(Gender.F)
                     .timezone("UTC")
                     .locale("pt_BR")
-                    .membershipType(null)
+                    .membershipType(defaultMembership)
                     .build();
 
             login = Login.builder()
@@ -110,13 +112,15 @@ public class AuthService {
                     .passwordHash(passwordEncoder.encode("oauth2_dummy_password"))
                     .user(newUser)
                     .build();
+
             newUser.setLogin(login);
-            userRepository.save(newUser);
+            User savedUser = userRepository.save(newUser);
+            login.setUser(savedUser);
+            loginRepository.save(login);
         }
 
         return jwtTokenUtil.generateToken(login.getUser());
     }
-
 
     public String getGoogleAuthUrl() {
         return "https://accounts.google.com/o/oauth2/v2/auth" +

@@ -1,9 +1,15 @@
 package com.rununit.rununit.web.controllers;
 
+import com.rununit.rununit.domain.entities.Login;
+import com.rununit.rununit.domain.entities.MembershipType;
 import com.rununit.rununit.domain.entities.User;
 import com.rununit.rununit.domain.services.AuthService;
+import com.rununit.rununit.infrastructure.repositories.MembershipTypeRepository;
 import com.rununit.rununit.infrastructure.repositories.UserRepository;
 import com.rununit.rununit.infrastructure.security.JwtTokenUtil;
+import com.rununit.rununit.web.dto.user.UserCreationRequestDto;
+import com.rununit.rununit.web.dto.user.UserResponseDto;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -14,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
+@CrossOrigin(origins = "*")
 public class AuthController {
 
     @Autowired
@@ -26,12 +33,14 @@ public class AuthController {
     private UserRepository userRepository;
 
     @Autowired
+    private MembershipTypeRepository membershipTypeRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
     private AuthService authService;
 
-    // A CLASSE RECORD QUE ESTAVA CAUSANDO O ERRO
     private record AuthRequest(String email, String password) {}
 
 
@@ -39,11 +48,9 @@ public class AuthController {
     public String login(@RequestBody AuthRequest request) {
         try {
             authManager.authenticate(
-                    // CORREÇÃO 1: request.email() e request.password()
                     new UsernamePasswordAuthenticationToken(request.email(), request.password())
             );
 
-            // CORREÇÃO 2: request.email()
             User user = userRepository.findByLoginEmail(request.email())
                     .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
@@ -53,11 +60,44 @@ public class AuthController {
         }
     }
 
-
     @PostMapping("/register")
-    public User register(@RequestBody User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
+    public UserResponseDto register(@RequestBody @Valid UserCreationRequestDto request) {
+        MembershipType defaultMembership = membershipTypeRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Tipo de associação padrão não encontrado"));
+
+        User user = new User();
+        user.setName(request.name());
+        user.setLastName(request.lastName());
+        user.setBirthDate(request.birthDate());
+        user.setGender(request.gender());
+        user.setTimezone(request.timezone());
+        user.setLocale(request.locale());
+        user.setMembershipType(defaultMembership);
+
+        Login login = new Login();
+        login.setUser(user);
+        login.setEmail(request.email());
+        login.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setLogin(login);
+        User savedUser = userRepository.save(user);
+
+
+        return new UserResponseDto(
+                savedUser.getId(),
+                savedUser.getName(),
+                savedUser.getLastName(),
+                savedUser.getLogin().getEmail(),
+                savedUser.getUserRole(),
+                savedUser.getProfilePictureUrl(),
+                savedUser.getBirthDate(),
+                savedUser.getGender(),
+                savedUser.getTimezone(),
+                savedUser.getLocale(),
+                savedUser.getTotalRunningDistance(),
+                savedUser.getTotalRunningTime(),
+                savedUser.isActive(),
+                savedUser.getCreatedAt()
+        );
     }
 
 

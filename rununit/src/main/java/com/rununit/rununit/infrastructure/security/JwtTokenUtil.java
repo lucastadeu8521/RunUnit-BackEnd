@@ -5,19 +5,18 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.SignatureException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.function.Function;
-import javax.crypto.SecretKey; // Importar SecretKey
 
 @Component
 public class JwtTokenUtil {
@@ -29,45 +28,50 @@ public class JwtTokenUtil {
 
     @Value("${jwt.expiration.hours}")
     private long EXPIRATION_HOURS;
+
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
     }
+
 
     public String generateToken(User user) {
         long expirationTimeMs = EXPIRATION_HOURS * 60 * 60 * 1000;
 
         return Jwts.builder()
-                .setSubject(user.getLogin().getEmail())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expirationTimeMs))
-                .signWith(SignatureAlgorithm.HS256, getSigningKey())
+                .subject(user.getLogin().getEmail())
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + expirationTimeMs))
+                .signWith(getSigningKey())
                 .compact();
     }
+
 
     public String getUsernameFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
     }
 
+
     public boolean validateToken(String token) {
         try {
             Jwts.parser()
-                    .setSigningKey(getSigningKey())
+                    .verifyWith(getSigningKey()) // usa o novo método da versão 0.12.x
                     .build()
-                    .parseClaimsJws(token);
+                    .parseSignedClaims(token);
             return true;
         } catch (SignatureException e) {
-            logger.error("Assinatura JWT inválida: {}", e.getMessage()); // LOG
+            logger.error("Assinatura JWT inválida: {}", e.getMessage());
         } catch (MalformedJwtException e) {
-            logger.error("Token JWT malformado: {}", e.getMessage()); // LOG
+            logger.error("Token JWT malformado: {}", e.getMessage());
         } catch (ExpiredJwtException e) {
-            logger.error("Token JWT expirado: {}", e.getMessage()); // LOG
+            logger.error("Token JWT expirado: {}", e.getMessage());
         } catch (UnsupportedJwtException e) {
-            logger.error("Token JWT não suportado: {}", e.getMessage()); // LOG
+            logger.error("Token JWT não suportado: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
-            logger.error("Argumento ilegal/token JWT vazio: {}", e.getMessage()); // LOG
+            logger.error("Token JWT vazio ou inválido: {}", e.getMessage());
         }
         return false;
     }
+
 
     public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = getAllClaimsFromToken(token);
@@ -76,9 +80,9 @@ public class JwtTokenUtil {
 
     private Claims getAllClaimsFromToken(String token) {
         return Jwts.parser()
-                .setSigningKey(getSigningKey())
+                .verifyWith(getSigningKey())
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }
