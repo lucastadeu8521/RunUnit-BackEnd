@@ -16,12 +16,12 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationEntryPoint.class);
 
     @Override
-    public void commence(HttpServletRequest request,
-                         HttpServletResponse response,
-                         AuthenticationException authException) throws IOException {
-        logger.error("Acesso negado. Não autorizado (401): {}", authException.getMessage());
+    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException {
+
+        logger.warn("Falha na Autenticação (401): Acesso negado. URL: {}", request.getRequestURI(), authException);
+
         response.setContentType("application/json");
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.getOutputStream().println("{ \"error\": \"Acesso não autorizado ou token inválido\", \"status\": 401 }");
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401 Unauthorized
+        response.getWriter().write("{\"error\": \"Falha na autenticação ou token inválido\", \"status\": 401, \"path\": \"" + request.getRequestURI() + "\"}");
     }
 }

@@ -7,6 +7,9 @@ import com.rununit.rununit.web.dto.user.UserUpdateRequestDto;
 import com.rununit.rununit.web.dto.user.PasswordUpdateRequestDto;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -24,10 +27,21 @@ public class UserController {
     }
 
     private Long getAuthenticatedUserId() {
-        return 1L;
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException("Usuário não autenticado no contexto de segurança.");
+        }
+
+        try {
+            return (Long) authentication.getPrincipal();
+        } catch (ClassCastException e) {
+            System.err.println("ERRO: O principal não é do tipo Long. Retornando 1L como fallback inseguro.");
+            return 1L;
+        }
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserCreationRequestDto requestDto) {
         UserResponseDto responseDto = userService.createUser(requestDto);
 
@@ -40,12 +54,14 @@ public class UserController {
         return ResponseEntity.created(location).body(responseDto);
     }
 
-    @GetMapping
+    @GetMapping("/")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR', 'USER')")
     public List<UserResponseDto> getAllUsers() {
         return userService.getAllUsers();
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR') or #id == principal.id")
     public ResponseEntity<UserResponseDto> getUserById(@PathVariable Long id) {
         return userService.getUserResponseById(id)
                 .map(ResponseEntity::ok)
@@ -53,6 +69,7 @@ public class UserController {
     }
 
     @PutMapping("/profile")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserResponseDto> updateProfile(
             @Valid @RequestBody UserUpdateRequestDto requestDto) {
 
@@ -63,6 +80,7 @@ public class UserController {
     }
 
     @PutMapping("/password")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> updatePassword(
             @Valid @RequestBody PasswordUpdateRequestDto requestDto) {
 
@@ -72,6 +90,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or #id == principal.id")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();

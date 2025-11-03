@@ -35,39 +35,52 @@ public class JwtTokenUtil {
     private UserRepository userRepository;
 
     private SecretKey getSigningKey() {
+        if (SECRET_KEY == null || SECRET_KEY.length() < 32) {
+            logger.error("ERRO CRÍTICO: Chave secreta JWT não está configurada ou é muito curta. Tamanho atual: {}", SECRET_KEY != null ? SECRET_KEY.length() : 0);
+        }
         return Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
     }
+
     public String generateToken(User user) {
         long expirationTimeMs = EXPIRATION_HOURS * 60 * 60 * 1000;
 
-        return Jwts.builder()
+        String token = Jwts.builder()
                 .subject(user.getLogin().getEmail())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expirationTimeMs))
                 .signWith(getSigningKey())
                 .compact();
+
+        logger.info("Token JWT gerado para o usuário {}. Duração: {} horas.", user.getLogin().getEmail(), EXPIRATION_HOURS);
+        return token;
     }
 
     public boolean validateToken(String token) {
+        if (token == null || token.trim().isEmpty()) {
+            logger.warn("Tentativa de validar token nulo ou vazio.");
+            return false;
+        }
         try {
             Jwts.parser()
                     .verifyWith(getSigningKey())
                     .build()
                     .parseSignedClaims(token);
+            logger.debug("Token JWT validado com sucesso.");
             return true;
         } catch (SignatureException e) {
-            logger.error("Assinatura JWT inválida: {}", e.getMessage());
+            logger.error("Falha na Validação (401): Assinatura JWT inválida. Chave de validação incorreta. Mensagem: {}", e.getMessage());
         } catch (MalformedJwtException e) {
-            logger.error("Token JWT malformado: {}", e.getMessage());
+            logger.error("Falha na Validação (401): Token JWT malformado. Mensagem: {}", e.getMessage());
         } catch (ExpiredJwtException e) {
-            logger.error("Token JWT expirado: {}", e.getMessage());
+            logger.error("Falha na Validação (401): Token JWT expirado. Mensagem: {}", e.getMessage());
         } catch (UnsupportedJwtException e) {
-            logger.error("Token JWT não suportado: {}", e.getMessage());
+            logger.error("Falha na Validação (401): Token JWT não suportado. Mensagem: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
-            logger.error("Token JWT vazio ou inválido: {}", e.getMessage());
+            logger.error("Falha na Validação (401): Token JWT vazio ou inválido. Mensagem: {}", e.getMessage());
         }
         return false;
     }
+
     public String getUsernameFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
     }
@@ -84,8 +97,10 @@ public class JwtTokenUtil {
                 .parseSignedClaims(token)
                 .getPayload();
     }
+
     public User extractUserFromToken(String token) {
         String email = getUsernameFromToken(token);
+        logger.debug("Extraindo User a partir do email: {}", email);
         return userRepository.findByLoginEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado a partir do token"));
     }

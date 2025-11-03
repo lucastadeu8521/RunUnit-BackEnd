@@ -1,43 +1,42 @@
 package com.rununit.rununit.infrastructure.security;
 
 import com.rununit.rununit.domain.entities.Login;
+import com.rununit.rununit.domain.entities.User;
+import com.rununit.rununit.infrastructure.repositories.UserRepository;
 import com.rununit.rununit.infrastructure.repositories.LoginRepository;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import com.rununit.rununit.infrastructure.security.AuthUser;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-
-import java.util.Collections;
-import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final LoginRepository loginRepository;
+    private final UserRepository userRepository;
 
-    public CustomUserDetailsService(LoginRepository loginRepository) {
+    public CustomUserDetailsService(LoginRepository loginRepository, UserRepository userRepository) {
         this.loginRepository = loginRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Login login = loginRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado com email: " + email));
+        // 1. Buscar o Login pelo email
+        Login login = loginRepository.findByEmail(email) // O método deve existir no seu LoginRepository
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + email));
 
-        String roleName = login.getUser().getUserRole().name();
+        // 2. Buscar o User associado ao Login (assumindo que Login tem uma FK ou ID de User)
+        // Se a entidade Login tem um link direto (como login.getUser()), use-o.
+        // Se não, busque o User pelo ID do Login
+        User user = userRepository.findByLoginEmail(email) // Método findByLogin deve ser implementado no UserRepository
+                .orElseThrow(() -> new UsernameNotFoundException("Dados do usuário não encontrados para o email: " + email));
 
-        List<GrantedAuthority> authorities = Collections.singletonList(
-                new SimpleGrantedAuthority("ROLE_" + roleName)
-        );
 
-
-        return new org.springframework.security.core.userdetails.User(
-                login.getEmail(),
-                login.getPasswordHash(),
-                authorities
-        );
+        // 3. Ponto CRÍTICO: Retornar AuthUser
+        return new AuthUser(user);
     }
 }
-
