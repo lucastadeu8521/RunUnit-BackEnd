@@ -42,4 +42,10 @@ public class MembershipType {
 
     public MembershipType(){
     }
+
+    public MembershipType(String name, BigDecimal monthlyPrice, String description) {
+        this.name = name;
+        this.monthlyPrice = monthlyPrice;
+        this.description = description;
+    }
 }

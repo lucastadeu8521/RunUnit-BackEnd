@@ -61,6 +61,6 @@ public class AuthUser implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true; // Use o status 'active' real do seu modelo User se aplicável
+        return true;
     }
 }

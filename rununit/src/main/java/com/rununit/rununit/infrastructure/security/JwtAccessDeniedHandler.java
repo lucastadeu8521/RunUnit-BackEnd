@@ -18,11 +18,10 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
 
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
-        // Este é chamado quando o usuário está autenticado, mas não tem a ROLE correta.
         logger.warn("Acesso negado (403): Usuário autenticado não tem permissão para acessar: {}", request.getRequestURI());
 
         response.setContentType("application/json");
-        response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403 Forbidden
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.getWriter().write("{\"error\": \"Acesso negado\", \"status\": 403, \"path\": \"" + request.getRequestURI() + "\"}");
     }
 }

@@ -87,8 +87,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-        // Se o token for nulo ou inválido, o filtro continua, mas o SecurityContext fica vazio.
-        // A próxima camada (SecurityConfig com .anyRequest().authenticated()) irá interceptar e retornar 401.
         filterChain.doFilter(request, response);
     }
 
