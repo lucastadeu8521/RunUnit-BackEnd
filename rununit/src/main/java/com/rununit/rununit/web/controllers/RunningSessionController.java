@@ -34,7 +34,6 @@ public class RunningSessionController {
         this.userRepository = userRepository;
     }
 
-
     private Long getAuthenticatedUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -78,21 +77,21 @@ public class RunningSessionController {
         return ResponseEntity.created(location).body(responseDto);
     }
 
-    @GetMapping("/my")
+    @GetMapping
     @PreAuthorize("isAuthenticated()")
     public List<RunningSessionResponseDto> getAllSessionsForUser() {
         return sessionService.getAllSessionsByUserId(getAuthenticatedUserId());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR') or @sessionService.isSessionOwner(#id, T(com.rununit.rununit.web.controllers.RunningSessionController).getAuthenticatedUserId())")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR') or @sessionService.isSessionOwner(#id, getAuthenticatedUserId())")
     public ResponseEntity<RunningSessionResponseDto> getSessionById(@PathVariable Long id) {
         RunningSessionResponseDto responseDto = sessionService.getSessionById(id);
         return ResponseEntity.ok(responseDto);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR') or @sessionService.isSessionOwner(#id, T(com.rununit.rununit.web.controllers.RunningSessionController).getAuthenticatedUserId())")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR') or @sessionService.isSessionOwner(#id, getAuthenticatedUserId())")
     public ResponseEntity<RunningSessionResponseDto> updateSession(
             @PathVariable Long id,
             @Valid @RequestBody RunningSessionUpdateRequestDto requestDto) {
@@ -102,7 +101,7 @@ public class RunningSessionController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR') or @sessionService.isSessionOwner(#id, T(com.rununit.rununit.web.controllers.RunningSessionController).getAuthenticatedUserId())")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR') or @sessionService.isSessionOwner(#id, getAuthenticatedUserId())")
     public ResponseEntity<Void> deleteSession(@PathVariable Long id) {
         sessionService.deleteSession(id, getAuthenticatedUserId());
         return ResponseEntity.noContent().build();

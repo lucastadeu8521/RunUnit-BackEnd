@@ -90,6 +90,7 @@ public class RunningSessionService {
                 .avgHeartRate(requestDto.avgHeartRate())
                 .peakHeartRate(requestDto.peakHeartRate())
                 .elevationGainMeters(requestDto.elevationGainMeters())
+                .active(true)
                 .build();
 
         RunningSession savedSession = runningSessionRepository.save(newSession);
