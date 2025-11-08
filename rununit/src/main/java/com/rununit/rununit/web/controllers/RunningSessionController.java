@@ -4,6 +4,7 @@ import com.rununit.rununit.domain.services.RunningSessionService;
 import com.rununit.rununit.web.dto.runningsession.RunningSessionCreationRequestDto;
 import com.rununit.rununit.web.dto.runningsession.RunningSessionResponseDto;
 import com.rununit.rununit.web.dto.runningsession.RunningSessionUpdateRequestDto;
+import com.rununit.rununit.infrastructure.repositories.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,16 +18,20 @@ import org.springframework.http.HttpStatus;
 
 import java.net.URI;
 import java.util.List;
-
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/sessions")
 public class RunningSessionController {
 
     private final RunningSessionService sessionService;
+    private final UserRepository userRepository;
 
-    public RunningSessionController(RunningSessionService sessionService) {
+    public RunningSessionController(
+            RunningSessionService sessionService,
+            UserRepository userRepository) {
         this.sessionService = sessionService;
+        this.userRepository = userRepository;
     }
 
 
@@ -40,11 +45,18 @@ public class RunningSessionController {
         Object principal = authentication.getPrincipal();
 
         if (principal instanceof UserDetails) {
-            String userIdStr = ((UserDetails) principal).getUsername();
+            String principalValue = ((UserDetails) principal).getUsername();
+
+
             try {
-                return Long.valueOf(userIdStr);
+                return Long.valueOf(principalValue);
             } catch (NumberFormatException e) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "ID do usuário no contexto de segurança inválido.");
+                Optional<Long> userIdOptional = userRepository.findByLoginEmail(principalValue)
+                        .map(user -> user.getId());
+
+                return userIdOptional.orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Não foi possível encontrar o ID do usuário autenticado no banco de dados a partir do login: " + principalValue));
             }
         }
 

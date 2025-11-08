@@ -27,7 +27,6 @@ public class RaceController {
     public ResponseEntity<RaceResponseDto> createRace(@Valid @RequestBody RaceCreationRequestDto requestDto) {
         RaceResponseDto responseDto = raceService.createRace(requestDto);
 
-        // Cria a URI do novo recurso: /api/races/{id}
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")

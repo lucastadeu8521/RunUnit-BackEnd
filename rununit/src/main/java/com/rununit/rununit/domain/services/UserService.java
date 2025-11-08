@@ -11,6 +11,7 @@ import com.rununit.rununit.web.dto.user.UserCreationRequestDto;
 import com.rununit.rununit.web.dto.user.UserResponseDto;
 import com.rununit.rununit.web.dto.user.UserUpdateRequestDto;
 import com.rununit.rununit.web.dto.user.PasswordUpdateRequestDto;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -24,11 +25,15 @@ public class UserService {
     private final UserRepository userRepository;
     private final LoginRepository loginRepository;
     private final MembershipTypeRepository membershipTypeRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, LoginRepository loginRepository, MembershipTypeRepository membershipTypeRepository) {
+    public UserService(UserRepository userRepository, LoginRepository loginRepository,
+                       MembershipTypeRepository membershipTypeRepository,
+                       PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.loginRepository = loginRepository;
         this.membershipTypeRepository = membershipTypeRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     private UserResponseDto toResponseDto(User user) {
@@ -62,32 +67,20 @@ public class UserService {
 
         User newUser = User.builder()
                 .name(requestDto.name())
-                .lastName(requestDto.lastName())
-                .birthDate(requestDto.birthDate())
-                .gender(requestDto.gender())
-                .timezone(requestDto.timezone())
-                .locale(requestDto.locale())
                 .userRole(UserRole.USER)
                 .membershipType(defaultMembership)
-                .totalRunningDistance(BigDecimal.ZERO)
-                .totalRunningTime(0L)
-                .active(true)
-                .hasBiometrics(false)
                 .build();
+
+        Login newLogin = new Login();
+        newLogin.setEmail(requestDto.email());
+        String encodedPassword = passwordEncoder.encode(requestDto.password());
+        newLogin.setPasswordHash(encodedPassword);
+        newLogin.setPasswordHash(requestDto.password());
+
+        newUser.setLogin(newLogin);
 
         User savedUser = userRepository.save(newUser);
 
-        Login newLogin = new Login();
-        newLogin.setUserId(savedUser.getId());
-        newLogin.setUser(savedUser);
-        newLogin.setEmail(requestDto.email());
-
-        newLogin.setPasswordHash(requestDto.password());
-
-        loginRepository.save(newLogin);
-
-        savedUser.setLogin(newLogin);
-        userRepository.save(savedUser);
 
         return toResponseDto(savedUser);
     }
